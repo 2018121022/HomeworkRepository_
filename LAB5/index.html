@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width" />
+    <link rel = 'stylesheet' type = 'text/css' href = 'main.css'>
+    <title>Document</title>
+</head>
+
+    <body>
+        <div id="head_line">
+            <div id="header">INTERNET-PROGRAMMING SHOP</div>
+            <nav>
+                <div class="navi" id="navi_index">메인페이지</div>
+                <div class="navi" style="padding-top:0.4rem;">
+                    <a href="login.html">로그인</a>
+                </div>
+                <div class="navi" style="padding-top:0.4rem;">
+                    <a href="signup.html">회원가입</a>
+                </div>
+            </nav>
+        </div>
+
+        
+        <div id="main">
+            <form id="filter">
+                <div class="filter_class">
+                    <div class="title">Choose a category:</div>
+                    <select id="category">
+                        <option value="All">All</option>
+                        <option value="HTML/CSS">HTML/CSS</option>
+                        <option value="Java">Java</option>
+                        <option value="Python">Python</option>
+                        <option value="SQL">SQL</option>
+                    </select>
+                </div>
+                <div class="filter_class">
+                    <div class="title">Enter search term:</div>
+                    <input type="text" id="search" placeholder=" e.g. HTML">
+                    <button id="button">Filter results</button>
+                </div>
+            </form>
+            <main class="products">
+            </main>
+        </div>
+        
+        <script>
+            let counter = 4;
+
+            fetch('product.json')
+                .then( response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then( json => init(json) )
+                .catch( err => console.error(`Fetch problem: ${err.message}`) );
+
+            function init(products) {
+                const category = document.getElementById('category')
+                const search = document.getElementById('search');
+                const button = document.getElementById('button');
+                const main = document.querySelector('main');
+
+                let lastCategory = category.value;
+                let lastSearch = '';
+
+                let categoryGroup;
+                let answer;
+
+                answer = products;
+                display();
+
+                categoryGroup = [];
+                answer = [];
+
+                button.onclick = selectCategory;
+
+                function selectCategory(e) {
+                    e.preventDefault();
+
+                    categoryGroup = [];
+                    answer = [];
+
+                    if(category.value === lastCategory && search.value.trim() === lastSearch) {
+                        return;
+                    } else {
+                        lastCategory = category.value;
+                        lastSearch = search.value.trim();
+
+                        if(category.value === 'All') {
+                            counter = 4;
+                            categoryGroup = products;
+                            selectProducts();
+                        } else {
+                            let lowerCaseType = category.value.toLowerCase();
+                            for(let i = 0; i < products.length; i++){
+                                if(products[i].type === lowerCaseType) {
+                                    categoryGroup.push(products[i]);
+                                }
+                            }
+                            selectProducts();
+                        }
+                    }
+                }
+
+                function selectProducts() {
+                    if(search.value.trim() === '') {
+                        answer = categoryGroup;
+                        display();
+                    } else {
+                        let lower = search.value.trim().toLowerCase();
+                
+                        for(let i = 0; i < categoryGroup.length; i++) {
+                            if(categoryGroup[i].title.toLowerCase().includes(lower)) {
+                                answer.push(categoryGroup[i]);
+                            }
+                        }
+                        display();
+                    }
+                }
+                
+                function display() {
+                    while (main.firstChild) {
+                        main.removeChild(main.firstChild);
+                    }
+                
+                    if(answer.length === 0) {
+                        const para = document.createElement('p');
+                        para.textContent = 'No results to display!';
+                        main.appendChild(para);
+                    } else {
+                        if (answer.length > 4)
+                            length = 4;
+                        else
+                            length = answer.length;
+                        for(let i = 0; i < length; i++) {
+                            fetchImg(answer[i], i);
+                        }
+                    }
+                }
+                
+                function fetchImg(product, i) {
+                    let url = './image/' + product.img;
+                    showProduct(url, product, i);
+                }
+                
+                function showProduct(url, product, i) {
+                    const section = document.createElement('section');
+                    const product_click = document.createElement('div');
+                    const product_button = document.createElement('div');
+                    const img = document.createElement('img');
+                    const title = document.createElement('div');
+                    const author = document.createElement('div');
+                    const price = document.createElement('div');
+
+                    product_click.setAttribute('class', 'product_click');
+                    product_click.id = i;
+                    product_click.style.opacity = "0";
+                    product_click.onclick = function(){
+                        var product_click = document.getElementById(this.id);
+                        if(product_click.style.opacity === "0"){
+                            product_click.style.opacity = "1";
+                        } else if(product_click.style.opacity === "1"){
+                            product_click.style.opacity = "0";
+                        } else {
+                            product_click.style.opacity = "0";
+                        }
+                    }
+
+                    product_button.textContent = "Click to see more";
+                    product_button.setAttribute('class', 'product_button');
+
+                    img.setAttribute('class', 'product_image');
+                    img.src = url;
+                    img.alt = product.title;
+
+                    title.setAttribute('class', 'product_detail');
+                    title.textContent = product.title;
+
+                    author.setAttribute('class', 'product_detail');
+                    author.textContent = '저자: ' + product.author;
+
+                    price.setAttribute('class', 'product_detail');
+                    price.textContent = '가격: ' + product.price;
+
+                    main.appendChild(section);
+                    section.appendChild(product_click);
+                    section.appendChild(product_button);
+                    section.appendChild(img);
+                    product_click.appendChild(title);
+                    product_click.appendChild(author);
+                    product_click.appendChild(price);
+
+                }
+            }
+
+            window.addEventListener('scroll', () => {
+                const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+                if(window.innerHeight + window.scrollY >= document.body.offsetHeight && category.value === 'All' && document.getElementById('search').value.trim() === "") {
+                    load();
+                }
+            });
+
+            function load() {
+                const main = document.querySelector('main');
+
+                var start = counter;
+                var end = start + 10;
+                counter = end + 1;
+
+                fetch('product.json').then(response => response.json()).then(function(json) {
+                    let products = json;
+                    for(start; start < end; start++) {
+                        const section = document.createElement('section');
+                        const product_click = document.createElement('div');
+                        const product_button = document.createElement('div');
+                        const img = document.createElement('img');
+                        const title = document.createElement('div');
+                        const author = document.createElement('div');
+                        const price = document.createElement('div');
+
+                        let url = './image/' + products[start].img;
+
+                        product_click.setAttribute('class', 'product_click');
+                        product_click.id = start;
+                        product_click.style.opacity = "0";
+                        product_click.onclick = function(){
+                            var product_click = document.getElementById(this.id);
+                            if(product_click.style.opacity === "0"){
+                                product_click.style.opacity = "1";
+                            } else if(product_click.style.opacity === "1"){
+                                product_click.style.opacity = "0";
+                            } else {
+                                product_click.style.opacity = "0";
+                            }
+                        }
+
+                        product_button.textContent = "Click to see more";
+                        product_button.setAttribute('class', 'product_button');
+
+                        img.setAttribute('class', 'product_image');
+                        img.src = url;
+                        img.alt = products[start].title;
+                
+                        title.setAttribute('class', 'product_detail');
+                        title.textContent = products[start].title;
+                
+                        author.setAttribute('class', 'product_detail');
+                        author.textContent = '저자: ' + products[start].author;
+                
+                        price.setAttribute('class', 'product_detail');
+                        price.textContent = '가격: ' + products[start].price;
+            
+                        main.appendChild(section);
+                        section.appendChild(product_click);
+                        section.appendChild(product_button);
+                        section.appendChild(img);
+                        product_click.appendChild(title);
+                        product_click.appendChild(author);
+                        product_click.appendChild(price);
+                    }
+                })
+
+                .catch(console.error);
+            };
+        </script>
+    </body>
+</html>
